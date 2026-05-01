@@ -67,7 +67,7 @@ body::after{content:'';position:absolute;width:900px;height:900px;border-radius:
 <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
 <div class="main" id="mainArea">
   <div class="idle-screen" id="idleScreen">
-    <div class="idle-title">Audience<br><span>Engagement</span></div>
+    <div class="idle-title" id="displayTitle">Audience<br><span id="displaySubtitle">Engagement</span></div>
     <div class="idle-sub">Scan den QR-Code um teilzunehmen</div>
     <div class="qr-box" id="qrDisplay"></div>
     <div class="scan-hint">↑ Handy-Kamera auf den Code richten</div>
@@ -117,6 +117,12 @@ onValue(ref(db, 'events/' + eventId), (snapshot) => {
   if(!data) return;
 
   if(data.name) document.getElementById('eventName').textContent = data.name;
+  if(data.displayTitle) {
+    const el = document.getElementById('displayTitle');
+    const sub = document.getElementById('displaySubtitle');
+    el.childNodes[0].textContent = data.displayTitle;
+    if(sub && data.displaySubtitle) sub.textContent = data.displaySubtitle;
+  }
 
   // Participant count
   const pCount = data.participants ? Object.keys(data.participants).length : 0;

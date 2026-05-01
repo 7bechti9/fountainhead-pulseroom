@@ -874,6 +874,25 @@ body{
             placeholder="Neues Admin-Passwort">
         </div>
       </div>
+
+      <!-- Display Felder -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--grey-border);">
+        <div style="font-size:12px;color:var(--grey);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;">
+          📺 Display-Screen Text
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="lbl">Zeile 1 — Weiß <span style="color:var(--grey);font-weight:400;">(z.B. V-Bank Krypto Brunch)</span></label>
+            <input class="inp" id="displayTitle" type="text"
+              placeholder="z.B. V-Bank Krypto Brunch Hamburg">
+          </div>
+          <div class="form-group">
+            <label class="lbl">Zeile 2 — Blau <span style="color:var(--grey);font-weight:400;">(z.B. Quiz, Feedback, Willkommen)</span></label>
+            <input class="inp" id="displaySubtitle" type="text"
+              placeholder="z.B. Quiz">
+          </div>
+        </div>
+      </div>
       <div style="margin-top:20px;" class="row">
         <button class="btn-gold" onclick="saveEvent()">
           Event speichern & QR generieren
@@ -1216,14 +1235,18 @@ function saveEvent(){
 
   const date = document.getElementById('eventDate').value;
   const loc  = document.getElementById('eventLocation').value.trim();
+  const displayTitle    = document.getElementById('displayTitle').value.trim();
+  const displaySubtitle = document.getElementById('displaySubtitle').value.trim();
   const newPw= document.getElementById('newPassword').value;
 
   if(!state.event){
-    state.event = { id: genEventId(name), name, date, location: loc };
+    state.event = { id: genEventId(name), name, date, location: loc, displayTitle, displaySubtitle };
   } else {
     state.event.name = name;
     state.event.date = date;
     state.event.location = loc;
+    state.event.displayTitle = displayTitle;
+    state.event.displaySubtitle = displaySubtitle;
   }
 
   if(newPw.length >= 4){
@@ -1254,6 +1277,8 @@ function showEventUI(){
   document.getElementById('eventName').value = ev.name || '';
   document.getElementById('eventDate').value = ev.date || '';
   document.getElementById('eventLocation').value = ev.location || '';
+  document.getElementById('displayTitle').value = ev.displayTitle || '';
+  document.getElementById('displaySubtitle').value = ev.displaySubtitle || '';
 
   // QR
   const baseUrl = window.location.href.replace('admin.html','participant.html');
@@ -1763,6 +1788,8 @@ window._fbPushEvent = async function(eventData, questions) {
     name: eventData.name,
     date: eventData.date || '',
     location: eventData.location || '',
+    displayTitle: eventData.displayTitle || '',
+    displaySubtitle: eventData.displaySubtitle || '',
     questions: qData,
     ended: false
   });
