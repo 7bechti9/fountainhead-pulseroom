@@ -1235,6 +1235,11 @@ function saveEvent(){
   save();
   showEventUI();
   toast('✓ Event gespeichert!');
+  // Push to Firebase
+  if(window._fbPushEvent) {
+    const allQ = [...state.questions.quiz, ...state.questions.survey];
+    window._fbPushEvent(state.event, allQ).then(() => toast('✓ Event auch in Firebase gespeichert!'));
+  }
 }
 
 function genEventId(name){
@@ -1545,6 +1550,11 @@ function toggleActivate(type,id){
   state.control[id].active = !state.control[id].active;
   save(); renderControl();
   toast(state.control[id].active ? '▶ Frage aktiviert — Teilnehmer sehen sie jetzt.' : '⏸ Frage deaktiviert.');
+  // Firebase sync
+  if(state.event && window._fbToggleActivate) {
+    const qs = state.questions[type] || [];
+    window._fbToggleActivate(state.event.id, id, qs, state.control[id].active);
+  }
 }
 
 function toggleReveal(type,id){
@@ -1552,6 +1562,10 @@ function toggleReveal(type,id){
   state.control[id].revealed = !state.control[id].revealed;
   save(); renderControl();
   toast(state.control[id].revealed ? '👁 Ergebnis aufgedeckt!' : 'Ergebnis ausgeblendet.');
+  // Firebase sync
+  if(state.event && window._fbToggleReveal) {
+    window._fbToggleReveal(state.event.id, id, state.control[id].revealed);
+  }
 }
 
 function activateAll(){
@@ -1580,6 +1594,7 @@ function switchToSurvey(){
 function endEvent(){
   toast('■ Event beendet. Daten können exportiert werden.');
   document.getElementById('livePill').style.display='none';
+  if(state.event && window._fbEndEvent) window._fbEndEvent(state.event.id);
 }
 
 // ══════════════════════════════════════════════
@@ -1658,5 +1673,93 @@ document.addEventListener('keydown',e=>{
   }
 });
 </script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {apiKey:"AIzaSyD4bV78hMgY3HSVY1naBSdg8eIdNG3gvy0",authDomain:"fountainhead-pulseroom.firebaseapp.com",databaseURL:"https://fountainhead-pulseroom-default-rtdb.europe-west1.firebasedatabase.app",projectId:"fountainhead-pulseroom",storageBucket:"fountainhead-pulseroom.firebasestorage.app",messagingSenderId:"846519896869",appId:"1:846519896869:web:bd426feeaba5b2ce2f28cc"};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window._fbDb = db;
+window._fbRef = ref;
+window._fbSet = set;
+window._fbGet = get;
+window._fbOnValue = onValue;
+window._fbUpdate = update;
+window._fbRemove = remove;
+
+// Override toggleActivate to sync with Firebase
+window._fbToggleActivate = async function(eventId, questionId, questions, isActive) {
+  const eventRef = ref(db, 'events/' + eventId);
+  
+  // First push event data if not exists
+  const snap = await get(eventRef);
+  if(!snap.exists()) return;
+  
+  // Deactivate all other questions first
+  const updates = {};
+  questions.forEach(q => {
+    updates['events/' + eventId + '/questions/' + q.id + '/active'] = false;
+  });
+  updates['events/' + eventId + '/questions/' + questionId + '/active'] = isActive;
+  await update(ref(db), updates);
+};
+
+window._fbToggleReveal = async function(eventId, questionId, isRevealed) {
+  await update(ref(db, 'events/' + eventId + '/questions/' + questionId), {
+    revealed: isRevealed
+  });
+};
+
+window._fbPushEvent = async function(eventData, questions) {
+  const eventRef = ref(db, 'events/' + eventData.id);
+  const qData = {};
+  questions.forEach(q => {
+    qData[q.id] = {
+      id: q.id,
+      text: q.text,
+      options: q.options,
+      correct: q.correct,
+      multi: q.multi || false,
+      source: q.source || '',
+      active: false,
+      revealed: false,
+      votes: {}
+    };
+  });
+  await set(eventRef, {
+    id: eventData.id,
+    name: eventData.name,
+    date: eventData.date || '',
+    location: eventData.location || '',
+    questions: qData,
+    ended: false
+  });
+};
+
+window._fbEndEvent = async function(eventId) {
+  await update(ref(db, 'events/' + eventId), { ended: true, active: false });
+};
+
+// Live participant count
+window._fbWatchParticipants = function(eventId, callback) {
+  onValue(ref(db, 'events/' + eventId + '/participants'), (snap) => {
+    const count = snap.val() ? Object.keys(snap.val()).length : 0;
+    callback(count);
+  });
+};
+
+// Live vote count
+window._fbWatchVotes = function(eventId, questionId, callback) {
+  onValue(ref(db, 'events/' + eventId + '/questions/' + questionId + '/votes'), (snap) => {
+    callback(snap.val() || {});
+  });
+};
+
+console.log('Firebase connected ✓');
+</script>
+
 </body>
 </html>
