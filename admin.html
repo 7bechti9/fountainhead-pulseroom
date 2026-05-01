@@ -1489,6 +1489,36 @@ function renderControl(){
   renderCtrlList('quiz','controlList');
   renderCtrlList('survey','surveyControlList');
   document.getElementById('statPhase').textContent='Quiz';
+  // Watch live votes from Firebase
+  if(state.event && window._fbOnValue && window._fbRef && window._fbDb){
+    const allQ = [...state.questions.quiz, ...state.questions.survey];
+    allQ.forEach(q => {
+      window._fbOnValue(window._fbRef(window._fbDb, 'events/' + state.event.id + '/questions/' + q.id + '/votes'), (snap) => {
+        const votes = snap.val() || {};
+        q.votes = q.options.map((_,i) => votes[i] || 0);
+        const total = q.votes.reduce((a,b)=>a+b,0);
+        // Update vote bars in UI
+        q.options.forEach((_,i) => {
+          const pct = total > 0 ? Math.round(q.votes[i]/total*100) : 0;
+          const bar = document.getElementById('rbar-fill-' + q.id + '-' + i);
+          const pctEl = document.getElementById('rbar-pct-' + q.id + '-' + i);
+          if(bar) bar.style.width = pct + '%';
+          if(pctEl) pctEl.textContent = pct + '%';
+        });
+        // Update answer count
+        const countEl = document.getElementById('vote-count-' + q.id);
+        if(countEl) countEl.textContent = total + ' Antworten eingegangen';
+        // Update live stat
+        document.getElementById('statAnswered').textContent = total;
+      });
+      // Watch participant count
+      window._fbOnValue(window._fbRef(window._fbDb, 'events/' + state.event.id + '/participants'), (snap) => {
+        const count = snap.val() ? Object.keys(snap.val()).length : 0;
+        document.getElementById('statParticipants').textContent = count;
+        document.getElementById('liveCount').textContent = count;
+      });
+    });
+  }
 }
 
 function renderCtrlList(type,containerId){
@@ -1526,7 +1556,7 @@ function renderCtrlList(type,containerId){
       <div class="ctrl-qnum">${i+1}</div>
       <div class="ctrl-text">
         <div class="ctrl-qtitle">${esc(q.text.slice(0,70))}${q.text.length>70?'…':''}</div>
-        <div class="ctrl-qmeta">${q.options.length} Optionen · ${q.votes.reduce((a,b)=>a+b,0)} Antworten · ${q.source||'—'}</div>
+        <div class="ctrl-qmeta" id="vote-count-${q.id}">${q.options.length} Optionen · ${q.votes.reduce((a,b)=>a+b,0)} Antworten · ${q.source||'—'}</div>
         <div class="result-bars" id="bars-${q.id}" style="${ctrl.revealed?'':'opacity:.4'}">${bars}</div>
       </div>
       <span class="status-badge status-${status}">${statusLabel}</span>
