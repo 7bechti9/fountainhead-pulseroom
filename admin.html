@@ -1210,6 +1210,14 @@ function showPage(name){
 // INIT
 // ══════════════════════════════════════════════
 function initApp(){
+  // Clean up stale control state - reset any questions that were active/revealed
+  // This prevents old state from showing on fresh load
+  if(state.event && state.control) {
+    // Keep control state only if event exists and is valid
+  } else {
+    state.control = {};
+    save();
+  }
   if(state.event){
     showEventUI();
     renderQuestions();
@@ -1313,14 +1321,10 @@ function showEventUI(){
 function resetEvent(){
   state.event = null;
   state.control = {};
-  // Reset all votes to 0
-  state.questions.quiz.forEach(q => { q.votes = q.options.map(()=>0); });
-  state.questions.survey.forEach(q => { q.votes = q.options.map(()=>0); });
+  state.questions.quiz.forEach(q => { 
+    q.votes = q.options.map(()=>0); 
+  });
   save();
-  // Also delete from Firebase
-  if(window._fbRemove && window._fbRef && window._fbDb) {
-    // Can't delete all, just mark as reset
-  }
   document.getElementById('qrCard').style.display='none';
   document.getElementById('sessionCard').style.display='none';
   document.getElementById('eventName').value='';
@@ -1328,7 +1332,6 @@ function resetEvent(){
   document.getElementById('eventLocation').value='';
   document.getElementById('displayTitle').value='';
   document.getElementById('displaySubtitle').value='';
-  // Reset to page 1
   showPage('setup');
   toast('✓ Event gelöscht. Bereit für neues Event.');
 }
@@ -1535,7 +1538,6 @@ function saveQuestions(){
 // ══════════════════════════════════════════════
 function renderControl(){
   renderCtrlList('quiz','controlList');
-  renderCtrlList('survey','surveyControlList');
   document.getElementById('statPhase').textContent='Quiz';
   // Watch live votes from Firebase
   if(state.event && window._fbOnValue && window._fbRef && window._fbDb){
