@@ -914,10 +914,20 @@ body{
         </div>
         <div class="qr-info">
           <div class="event-id-badge" id="eventIdBadge">EVENT-ID: —</div>
-          <div class="qr-url" id="qrUrl">—</div>
-          <p style="font-size:13px;color:var(--grey);line-height:1.7;margin-bottom:16px;">
-            Dieser Link ist für Teilnehmer. Anonym — kein Name, keine E-Mail.
-            Jeder Scan erzeugt eine zufällige anonyme ID.
+
+          <div class="lbl" style="margin-bottom:4px;">👥 Teilnehmer-Link</div>
+          <div class="qr-url" id="qrUrl" style="margin-bottom:12px;">—</div>
+
+          <div class="lbl" style="margin-bottom:4px;">📺 Display-Link</div>
+          <div class="qr-url" id="displayUrl" style="margin-bottom:16px;color:var(--gold-light);">—</div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="btn-outline" onclick="copyURL()" style="flex:1;padding:8px 14px;font-size:12px;">⎘ Teilnehmer-Link</button>
+            <button class="btn-outline" onclick="copyDisplayURL()" style="flex:1;padding:8px 14px;font-size:12px;">⎘ Display-Link</button>
+          </div>
+
+          <p style="font-size:12px;color:var(--grey);line-height:1.7;margin-bottom:16px;">
+            Anonym — kein Name, keine E-Mail. Jeder Scan erzeugt eine zufällige anonyme ID.
           </p>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <div class="toggle-wrap">
@@ -1024,16 +1034,11 @@ body{
     </div>
 
     <div class="card">
-      <div class="card-title">Survey-Steuerung</div>
-      <div id="surveyControlList"></div>
-    </div>
-
-    <div class="card">
       <div class="card-title">Event-Steuerung</div>
       <div class="row" style="gap:12px;flex-wrap:wrap;">
         <button class="btn-gold" onclick="activateAll()">▶ Alle Fragen aktivieren</button>
         <button class="btn-outline" onclick="revealAll()">👁 Alle Ergebnisse aufdecken</button>
-        <button class="btn-ghost" onclick="switchToSurvey()">→ Zur Umfrage wechseln</button>
+        <button class="btn-ghost" onclick="resetVotes()">↺ Votes zurücksetzen</button>
         <button class="btn-danger" onclick="endEvent();">
           ■ Event beenden
         </button>
@@ -1100,7 +1105,7 @@ const ADMIN_PW_KEY = 'vbank_admin_pw';
 const STATE_KEY    = 'vbank_state';
 
 let state = load() || {
-  pw: 'admin2026',
+  pw: 'FHDpulse2026',
   event: null,
   questions: { quiz: [], survey: [] },
   control: {}   // questionId -> { active, revealed }
@@ -1171,7 +1176,7 @@ function genId(){
 // ══════════════════════════════════════════════
 function doLogin(){
   const pw = document.getElementById('pwInput').value;
-  if(pw === state.pw || pw === 'admin2026'){
+  if(pw === state.pw || pw === 'FHDpulse2026'){
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('appShell').style.display='block';
     initApp();
@@ -1283,10 +1288,12 @@ function showEventUI(){
   // QR
   const baseUrl = window.location.href.replace('admin.html','participant.html');
   const url = `${baseUrl}?event=${ev.id}`;
+  const displayUrlVal = window.location.href.replace('admin.html','display.html') + `?event=${ev.id}`;
 
   document.getElementById('qrCard').style.display='block';
   document.getElementById('sessionCard').style.display='block';
   document.getElementById('qrUrl').textContent = url;
+  document.getElementById('displayUrl').textContent = displayUrlVal;
   document.getElementById('eventIdBadge').textContent = 'EVENT-ID: ' + ev.id;
   document.getElementById('infoName').textContent = ev.name;
   document.getElementById('infoDateLoc').textContent =
@@ -1305,18 +1312,35 @@ function showEventUI(){
 
 function resetEvent(){
   state.event = null;
+  state.control = {};
+  // Reset all votes to 0
+  state.questions.quiz.forEach(q => { q.votes = q.options.map(()=>0); });
+  state.questions.survey.forEach(q => { q.votes = q.options.map(()=>0); });
   save();
+  // Also delete from Firebase
+  if(window._fbRemove && window._fbRef && window._fbDb) {
+    // Can't delete all, just mark as reset
+  }
   document.getElementById('qrCard').style.display='none';
   document.getElementById('sessionCard').style.display='none';
   document.getElementById('eventName').value='';
   document.getElementById('eventDate').value='';
   document.getElementById('eventLocation').value='';
-  toast('Event gelöscht.');
+  document.getElementById('displayTitle').value='';
+  document.getElementById('displaySubtitle').value='';
+  // Reset to page 1
+  showPage('setup');
+  toast('✓ Event gelöscht. Bereit für neues Event.');
 }
 
 function copyURL(){
   const url = document.getElementById('qrUrl').textContent;
-  navigator.clipboard.writeText(url).then(()=>toast('✓ Link kopiert!'));
+  navigator.clipboard.writeText(url).then(()=>toast('✓ Teilnehmer-Link kopiert!'));
+}
+
+function copyDisplayURL(){
+  const url = document.getElementById('displayUrl').textContent;
+  navigator.clipboard.writeText(url).then(()=>toast('✓ Display-Link kopiert!'));
 }
 
 function downloadQR(){
@@ -1554,6 +1578,7 @@ function renderCtrlList(type,containerId){
   }
 
   container.innerHTML = qs.map((q,i)=>{
+    // Always start with clean state if not explicitly set
     const ctrl = state.control[q.id] || { active:false, revealed:false };
     const total = q.votes.reduce((a,b)=>a+b,0)||1;
     const letters='ABCDEF';
@@ -1602,12 +1627,16 @@ function renderCtrlList(type,containerId){
 function toggleActivate(type,id){
   if(!state.control[id]) state.control[id]={active:false,revealed:false};
   state.control[id].active = !state.control[id].active;
+  // Always reset revealed when activating a question
+  if(state.control[id].active) state.control[id].revealed = false;
   save(); renderControl();
   toast(state.control[id].active ? '▶ Frage aktiviert — Teilnehmer sehen sie jetzt.' : '⏸ Frage deaktiviert.');
   // Firebase sync
   if(state.event && window._fbToggleActivate) {
     const qs = state.questions[type] || [];
     window._fbToggleActivate(state.event.id, id, qs, state.control[id].active);
+    // Also reset revealed in Firebase
+    if(state.control[id].active) window._fbToggleReveal(state.event.id, id, false);
   }
 }
 
@@ -1638,6 +1667,25 @@ function revealAll(){
   });
   save(); renderControl();
   toast('👁 Alle Ergebnisse aufgedeckt.');
+}
+
+function resetVotes(){
+  state.control = {};
+  state.questions.quiz.forEach(q => { q.votes = q.options.map(()=>0); });
+  save();
+  renderControl();
+  // Reset in Firebase
+  if(state.event && window._fbSet && window._fbRef && window._fbDb) {
+    state.questions.quiz.forEach(q => {
+      window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/questions/' + q.id + '/votes'), null);
+      window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/questions/' + q.id + '/active'), false);
+      window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/questions/' + q.id + '/revealed'), false);
+      window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/questions/' + q.id + '/answers'), null);
+    });
+    window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/participants'), null);
+    window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/ended'), false);
+  }
+  toast('↺ Alle Votes und Teilnehmer zurückgesetzt.');
 }
 
 function switchToSurvey(){
