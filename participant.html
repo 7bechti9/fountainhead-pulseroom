@@ -168,7 +168,7 @@ onValue(eventRef, (snapshot) => {
 
   // Handle questions
   if(data.questions) {
-    const qs = Object.values(data.questions);
+    const qs = Object.values(data.questions).sort((a,b) => (a.order||0) - (b.order||0));
     totalQ = qs.length;
     const active = qs.find(q => q.active);
     if(active) {
@@ -179,6 +179,16 @@ onValue(eventRef, (snapshot) => {
         loadQuestion(active, qs.indexOf(active), qs.length);
       }
       if(active.revealed && answered) {
+        showResults(active);
+      }
+      // Block voting if already revealed
+      if(active.revealed && !answered) {
+        answered = true;
+        document.getElementById('submitBtn').style.display = 'none';
+        document.querySelectorAll('.answer-btn').forEach(b => b.classList.add('disabled'));
+        const fb = document.getElementById('feedback');
+        fb.className = 'feedback waiting';
+        fb.innerHTML = '⏸ &nbsp; Ergebnis bereits aufgedeckt.';
         showResults(active);
       }
     } else {

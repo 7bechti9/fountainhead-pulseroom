@@ -1820,9 +1820,10 @@ window._fbToggleReveal = async function(eventId, questionId, isRevealed) {
 window._fbPushEvent = async function(eventData, questions) {
   const eventRef = ref(db, 'events/' + eventData.id);
   const qData = {};
-  questions.forEach(q => {
+  questions.forEach((q, idx) => {
     qData[q.id] = {
       id: q.id,
+      order: idx,
       text: q.text,
       options: q.options,
       correct: q.correct,

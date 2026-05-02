@@ -138,7 +138,7 @@ onValue(ref(db, 'events/' + eventId), (snapshot) => {
 
   if(!data.questions) return;
 
-  const qs = Object.values(data.questions);
+  const qs = Object.values(data.questions).sort((a,b) => (a.order||0) - (b.order||0));
   const total = qs.length;
   const active = qs.find(q => q.active);
 
