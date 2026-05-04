@@ -1223,16 +1223,9 @@ function initApp(){
     renderQuestions();
     renderControl();
   }
-  // Simulate live participants counter
-  let count = 47;
-  document.getElementById('liveCount').textContent = count;
+  // Show live pill - real data comes from Firebase watcher
+  document.getElementById('liveCount').textContent = '0';
   document.getElementById('livePill').style.display = 'flex';
-  setInterval(()=>{
-    if(Math.random()>.6) count += Math.random()>.5?1:0;
-    document.getElementById('liveCount').textContent = count;
-    document.getElementById('statParticipants').textContent = count;
-    document.getElementById('statAnswered').textContent = Math.floor(count*.82);
-  }, 3500);
 }
 
 // ══════════════════════════════════════════════
@@ -1293,11 +1286,11 @@ function showEventUI(){
   document.getElementById('displayTitle').value = ev.displayTitle || '';
   document.getElementById('displaySubtitle').value = ev.displaySubtitle || '';
 
-  // QR
-  const baseUrl = window.location.href.replace('admin.html','participant.html');
+  // QR - always use clean base URL without any query params
+  const cleanBase = window.location.origin + window.location.pathname.replace('admin.html','');
   const version = Date.now();
-  const url = `${baseUrl}?event=${ev.id}&v=${version}`;
-  const displayUrlVal = window.location.href.replace('admin.html','display.html') + `?event=${ev.id}&v=${version}`;
+  const url = `${cleanBase}participant.html?event=${ev.id}&v=${version}`;
+  const displayUrlVal = `${cleanBase}display.html?event=${ev.id}&v=${version}`;
 
   document.getElementById('qrCard').style.display='block';
   document.getElementById('sessionCard').style.display='block';
