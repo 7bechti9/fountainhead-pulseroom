@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audience Engagement — Admin</title>
+<title>PulseRoom Admin</title>
 
 <!-- QR Code library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -688,6 +688,23 @@ body{
   display:grid;grid-template-columns:1fr 1fr;gap:16px;
 }
 
+.q-mode-tab{
+  padding:10px 24px;font-size:13px;font-weight:600;
+  color:var(--grey);border-bottom:2px solid transparent;
+  cursor:pointer;background:none;border-top:none;
+  border-left:none;border-right:none;transition:all .2s;
+}
+.q-mode-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.q-mode-tab.survey-active{color:#3ddfa0;border-bottom-color:#3ddfa0;}
+
+/* Answer type selector */
+.ans-type-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px;}
+.ans-type-btn{padding:7px 16px;font-size:12px;font-weight:600;border-radius:20px;
+  cursor:pointer;border:1.5px solid var(--grey-border);background:transparent;
+  color:var(--grey);transition:all .2s;}
+.ans-type-btn.active{border-color:#3ddfa0;color:#3ddfa0;background:rgba(61,223,160,0.1);}
+.ans-type-btn:hover:not(.active){border-color:rgba(255,255,255,.3);color:var(--white);}
+
 .export-card{
   background:rgba(255,255,255,0.03);
   border:1px solid var(--grey-border);
@@ -901,51 +918,42 @@ body{
       </div>
     </div>
 
-    <!-- QR Code -->
+    <!-- QR Codes -->
     <div class="card" id="qrCard" style="display:none;">
-      <div class="card-title">QR-Code & Teilnehmer-Link</div>
-      <div class="qr-wrap">
-        <div>
-          <div class="qr-box" id="qrcode"></div>
-          <div style="display:flex;gap:10px;margin-top:14px;">
-            <button class="btn-gold" onclick="downloadQR()">⬇ PNG laden</button>
-            <button class="btn-outline" onclick="copyURL()">⎘ Link kopieren</button>
+      <div class="card-title">QR-Codes & Links</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- Quiz QR -->
+        <div style="background:rgba(2,139,242,0.06);border:1px solid var(--gold-border);border-radius:6px;padding:20px;">
+          <div class="lbl" style="color:var(--gold);margin-bottom:12px;">🎯 Quiz QR Code</div>
+          <div class="qr-box" id="qrcode" style="margin-bottom:12px;display:inline-block;"></div>
+          <div class="event-id-badge" id="eventIdBadge" style="margin-bottom:8px;">EVENT-ID: —</div>
+          <div class="qr-url" id="qrUrl" style="margin-bottom:12px;font-size:11px;">—</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-gold" onclick="downloadQR()" style="padding:8px 14px;font-size:12px;">⬇ PNG</button>
+            <button class="btn-outline" onclick="copyURL()" style="padding:8px 14px;font-size:12px;">⎘ Link</button>
           </div>
         </div>
-        <div class="qr-info">
-          <div class="event-id-badge" id="eventIdBadge">EVENT-ID: —</div>
 
-          <div class="lbl" style="margin-bottom:4px;">👥 Teilnehmer-Link</div>
-          <div class="qr-url" id="qrUrl" style="margin-bottom:12px;">—</div>
-
-          <div class="lbl" style="margin-bottom:4px;">📺 Display-Link</div>
-          <div class="qr-url" id="displayUrl" style="margin-bottom:16px;color:var(--gold-light);">—</div>
-
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-            <button class="btn-outline" onclick="copyURL()" style="flex:1;padding:8px 14px;font-size:12px;">⎘ Teilnehmer-Link</button>
-            <button class="btn-outline" onclick="copyDisplayURL()" style="flex:1;padding:8px 14px;font-size:12px;">⎘ Display-Link</button>
-          </div>
-
-          <p style="font-size:12px;color:var(--grey);line-height:1.7;margin-bottom:16px;">
-            Anonym — kein Name, keine E-Mail. Jeder Scan erzeugt eine zufällige anonyme ID.
-          </p>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div class="toggle-wrap">
-              <label class="toggle">
-                <input type="checkbox" id="toggleCheckin" checked>
-                <div class="toggle-slider"></div>
-              </label>
-              <span class="toggle-label">Check-in aktiv (Teilnehmer können beitreten)</span>
-            </div>
-            <div class="toggle-wrap">
-              <label class="toggle">
-                <input type="checkbox" id="toggleAnon" checked disabled>
-                <div class="toggle-slider"></div>
-              </label>
-              <span class="toggle-label">Anonym — keine persönlichen Daten (immer aktiv)</span>
-            </div>
+        <!-- Survey QR -->
+        <div style="background:rgba(61,223,160,0.06);border:1px solid rgba(61,223,160,0.25);border-radius:6px;padding:20px;">
+          <div class="lbl" style="color:#3ddfa0;margin-bottom:12px;">📋 Umfrage QR Code</div>
+          <div class="qr-box" id="surveyQrcode" style="margin-bottom:12px;display:inline-block;"></div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#3ddfa0;background:rgba(61,223,160,0.1);border:1px solid rgba(61,223,160,0.25);border-radius:3px;padding:4px 10px;margin-bottom:8px;display:inline-block;">SURVEY-ID: —</div>
+          <div class="qr-url" id="surveyUrl" style="margin-bottom:12px;font-size:11px;color:#3ddfa0;">—</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-gold" onclick="downloadSurveyQR()" style="padding:8px 14px;font-size:12px;background:#0f9e5e;">⬇ PNG</button>
+            <button class="btn-outline" onclick="copySurveyURL()" style="padding:8px 14px;font-size:12px;color:#3ddfa0;border-color:rgba(61,223,160,0.3);">⎘ Link</button>
           </div>
         </div>
+
+      </div>
+
+      <!-- Display Link -->
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--grey-border);">
+        <div class="lbl" style="margin-bottom:6px;">📺 Display-Link (Beamer)</div>
+        <div class="qr-url" id="displayUrl" style="margin-bottom:10px;">—</div>
+        <button class="btn-outline" onclick="copyDisplayURL()" style="padding:8px 14px;font-size:12px;">⎘ Display-Link kopieren</button>
       </div>
     </div>
 
@@ -1028,9 +1036,24 @@ body{
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Quiz-Steuerung</div>
-      <div id="controlList"></div>
+    <!-- Control mode tabs -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--gold-border);border-radius:6px;overflow:hidden;width:fit-content;">
+      <button class="ctrl-mode-tab active" id="ctrlmode-quiz-btn" onclick="switchCtrlMode('quiz')" style="padding:10px 24px;font-size:13px;font-weight:600;background:var(--gold);color:var(--navy);border:none;cursor:pointer;">🎯 Quiz</button>
+      <button class="ctrl-mode-tab" id="ctrlmode-survey-btn" onclick="switchCtrlMode('survey')" style="padding:10px 24px;font-size:13px;font-weight:600;background:transparent;color:var(--grey);border:none;cursor:pointer;border-left:1px solid var(--gold-border);">📋 Umfrage</button>
+    </div>
+
+    <div id="ctrlmode-quiz">
+      <div class="card">
+        <div class="card-title">Quiz-Steuerung</div>
+        <div id="controlList"></div>
+      </div>
+    </div>
+
+    <div id="ctrlmode-survey" style="display:none;">
+      <div class="card">
+        <div class="card-title" style="color:#3ddfa0;">Umfrage-Steuerung</div>
+        <div id="surveyControlList"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -1057,7 +1080,7 @@ body{
 
     <div class="export-grid">
       <div class="export-card">
-        <div class="export-icon">📊</div>
+        <div class="export-icon">🎯</div>
         <div class="export-title">Quiz-Ergebnisse</div>
         <div class="export-sub">
           Alle Antworten pro Frage mit Prozentverteilung und Anzahl Teilnehmer.
@@ -1067,11 +1090,12 @@ body{
       </div>
       <div class="export-card">
         <div class="export-icon">📋</div>
-        <div class="export-title">Survey-Ergebnisse</div>
+        <div class="export-title">Umfrage-Ergebnisse</div>
         <div class="export-sub">
-          Alle Survey-Antworten aggregiert. Anonym — kein Rückschluss auf Einzelpersonen.
+          Sterne-Durchschnitt, Ja/Nein Verteilung, Multiple Choice Ergebnisse.
+          Anonym — keine Personendaten.
         </div>
-        <button class="btn-gold" onclick="exportCSV('survey')">⬇ Survey CSV laden</button>
+        <button class="btn-gold" onclick="exportCSV('survey')" style="background:#0f9e5e;">⬇ Umfrage CSV laden</button>
       </div>
       <div class="export-card">
         <div class="export-icon">👥</div>
@@ -1289,7 +1313,7 @@ function showEventUI(){
   // QR - always use clean base URL without any query params
   const cleanBase = window.location.origin + window.location.pathname.replace('admin.html','');
   const version = Date.now();
-  const url = `${cleanBase}participant.html?event=${ev.id}&v=${version}`;
+  const url = `${cleanBase}quiz.html?event=${ev.id}&v=${version}`;
   const displayUrlVal = `${cleanBase}display.html?event=${ev.id}&v=${version}`;
 
   document.getElementById('qrCard').style.display='block';
@@ -1301,15 +1325,18 @@ function showEventUI(){
   document.getElementById('infoDateLoc').textContent =
     [ev.date ? new Date(ev.date).toLocaleDateString('de-DE') : '', ev.location].filter(Boolean).join(' · ') || '—';
 
-  // Generate QR
+  // Generate Quiz QR
   document.getElementById('qrcode').innerHTML = '';
   new QRCode(document.getElementById('qrcode'), {
     text: url,
-    width: 200, height: 200,
-    colorDark: '#0a1628',
+    width: 140, height: 140,
+    colorDark: '#02477B',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
   });
+
+  // Generate Survey QR
+  generateSurveyQR(ev);
 }
 
 function resetEvent(){
@@ -1760,6 +1787,282 @@ function toast(msg){
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ══════════════════════════════════════════════
+// QUIZ/SURVEY MODE SWITCHING
+// ══════════════════════════════════════════════
+function switchQMode(mode) {
+  document.getElementById('qmode-quiz').style.display = mode === 'quiz' ? 'block' : 'none';
+  document.getElementById('qmode-survey').style.display = mode === 'survey' ? 'block' : 'none';
+  document.getElementById('qtab-quiz-btn').classList.toggle('active', mode === 'quiz');
+  document.getElementById('qtab-survey-btn').classList.toggle('active', mode === 'survey');
+  document.getElementById('qtab-survey-btn').classList.toggle('survey-active', mode === 'survey');
+  if(mode === 'survey') renderSurveyList();
+}
+
+function switchCtrlMode(mode) {
+  document.getElementById('ctrlmode-quiz').style.display = mode === 'quiz' ? 'block' : 'none';
+  document.getElementById('ctrlmode-survey').style.display = mode === 'survey' ? 'block' : 'none';
+  const qBtn = document.getElementById('ctrlmode-quiz-btn');
+  const sBtn = document.getElementById('ctrlmode-survey-btn');
+  qBtn.style.background = mode === 'quiz' ? 'var(--gold)' : 'transparent';
+  qBtn.style.color = mode === 'quiz' ? 'var(--navy)' : 'var(--grey)';
+  sBtn.style.background = mode === 'survey' ? '#0f9e5e' : 'transparent';
+  sBtn.style.color = mode === 'survey' ? '#fff' : 'var(--grey)';
+  if(mode === 'survey') renderSurveyControlList();
+}
+
+// ── Survey Questions ──
+function addSurveyQuestion() {
+  const q = {
+    id: genId(),
+    text: '',
+    answerType: 'choice', // 'stars', 'choice', 'yesno'
+    options: ['',''],
+    correct: [],
+    multi: false,
+    source: '',
+    votes: [0,0]
+  };
+  state.questions.survey.push(q);
+  save();
+  renderSurveyList();
+}
+
+function renderSurveyList() {
+  const list = document.getElementById('surveyList');
+  const qs = state.questions.survey;
+  if(!qs || qs.length === 0) {
+    list.innerHTML = '<p style="color:var(--grey);font-size:14px;padding:12px 0;">Noch keine Umfrage-Fragen. Klicke "+ Umfrage-Frage hinzufügen".</p>';
+    return;
+  }
+  list.innerHTML = qs.map((q,i) => buildSurveyQItem(q,i)).join('');
+}
+
+function buildSurveyQItem(q, i) {
+  const typeLabels = {stars:'⭐ Sterne 1-5', choice:'☑ Multiple Choice', yesno:'✓✗ Ja / Nein'};
+  const typeColors = {stars:'#ffc400', choice:'var(--gold)', yesno:'#3ddfa0'};
+
+  let optionsHTML = '';
+  if(q.answerType === 'choice') {
+    optionsHTML = `
+      <div class="options-list" id="sopts-${q.id}">
+        ${(q.options||[]).map((opt,j) => `
+          <div class="option-row">
+            <div class="option-letter">${'ABCDEF'[j]}</div>
+            <input class="option-inp" type="text" value="${esc(opt)}" placeholder="Option ${'ABCDEF'[j]}"
+              oninput="updateSurveyOption('${q.id}',${j},this.value)">
+            <button class="btn-remove-opt" onclick="removeSurveyOption('${q.id}',${j})">✕</button>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn-ghost" onclick="addSurveyOption('${q.id}')" style="margin-top:8px;">+ Option</button>
+    `;
+  } else if(q.answerType === 'stars') {
+    optionsHTML = '<div style="font-size:24px;margin:8px 0;">⭐⭐⭐⭐⭐</div><div style="font-size:12px;color:var(--grey);">Teilnehmer wählen 1-5 Sterne</div>';
+  } else if(q.answerType === 'yesno') {
+    optionsHTML = '<div style="display:flex;gap:10px;margin:8px 0;"><div style="flex:1;padding:10px;border-radius:8px;text-align:center;font-weight:700;background:rgba(61,223,160,0.1);color:#3ddfa0;border:1px solid rgba(61,223,160,0.3);">✓ Ja</div><div style="flex:1;padding:10px;border-radius:8px;text-align:center;font-weight:700;background:rgba(224,52,52,0.1);color:#f08080;border:1px solid rgba(224,52,52,0.3);">✗ Nein</div></div>';
+  }
+
+  return `
+  <div class="q-item" id="sqitem-${q.id}" style="border-color:rgba(61,223,160,0.2);">
+    <div class="q-item-header" onclick="toggleSurveyQItem('${q.id}')">
+      <span class="q-handle">⠿</span>
+      <div class="q-num" style="background:rgba(61,223,160,0.1);border-color:rgba(61,223,160,0.3);color:#3ddfa0;">${i+1}</div>
+      <div class="q-preview ${q.text?'':'q-preview-empty'}">
+        ${q.text ? esc(q.text.slice(0,80))+(q.text.length>80?'…':'') : 'Frage eingeben...'}
+        <span style="font-size:10px;color:${typeColors[q.answerType]};margin-left:8px;font-weight:700;">${typeLabels[q.answerType]||''}</span>
+      </div>
+      <span class="q-chevron">▼</span>
+    </div>
+    <div class="q-item-body">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="lbl">Fragetext</label>
+        <textarea class="textarea" rows="2"
+          oninput="updateSurveyQText('${q.id}',this.value)"
+          placeholder="Frage hier eingeben...">${esc(q.text)}</textarea>
+      </div>
+
+      <div class="lbl" style="margin-bottom:8px;">Antwort-Typ</div>
+      <div class="ans-type-row">
+        <button class="ans-type-btn ${q.answerType==='stars'?'active':''}" onclick="setSurveyAnswerType('${q.id}','stars')">⭐ Sterne 1-5</button>
+        <button class="ans-type-btn ${q.answerType==='choice'?'active':''}" onclick="setSurveyAnswerType('${q.id}','choice')">☑ Multiple Choice</button>
+        <button class="ans-type-btn ${q.answerType==='yesno'?'active':''}" onclick="setSurveyAnswerType('${q.id}','yesno')">✓✗ Ja / Nein</button>
+      </div>
+
+      ${optionsHTML}
+
+      <div class="form-group" style="margin-top:12px;">
+        <label class="lbl">Quelle / Fußnote (optional)</label>
+        <input class="inp" type="text" value="${esc(q.source||'')}"
+          oninput="updateSurveySource('${q.id}',this.value)" placeholder="z.B. Eigene Erhebung 2026">
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn-danger" onclick="removeSurveyQuestion('${q.id}')">Frage löschen</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleSurveyQItem(id) {
+  document.getElementById('sqitem-'+id).classList.toggle('expanded');
+}
+
+function updateSurveyQText(id, val) {
+  const q = state.questions.survey.find(q=>q.id===id);
+  if(q) { q.text=val; save(); }
+}
+
+function updateSurveySource(id, val) {
+  const q = state.questions.survey.find(q=>q.id===id);
+  if(q) { q.source=val; save(); }
+}
+
+function updateSurveyOption(id, j, val) {
+  const q = state.questions.survey.find(q=>q.id===id);
+  if(q) { q.options[j]=val; save(); }
+}
+
+function addSurveyOption(id) {
+  const q = state.questions.survey.find(q=>q.id===id);
+  if(!q||q.options.length>=6) { toast('Max. 6 Optionen.'); return; }
+  q.options.push('');
+  q.votes.push(0);
+  save();
+  renderSurveyList();
+  setTimeout(()=>{ document.getElementById('sqitem-'+id).classList.add('expanded'); },10);
+}
+
+function removeSurveyOption(id, j) {
+  const q = state.questions.survey.find(q=>q.id===id);
+  if(!q||q.options.length<=2) { toast('Mindestens 2 Optionen.'); return; }
+  q.options.splice(j,1);
+  q.votes.splice(j,1);
+  save();
+  renderSurveyList();
+  setTimeout(()=>{ document.getElementById('sqitem-'+id).classList.add('expanded'); },10);
+}
+
+function setSurveyAnswerType(id, type) {
+  const q = state.questions.survey.find(q=>q.id===id);
+  if(!q) return;
+  q.answerType = type;
+  if(type === 'yesno') { q.options=['Ja','Nein']; q.votes=[0,0]; }
+  else if(type === 'stars') { q.options=['1','2','3','4','5']; q.votes=[0,0,0,0,0]; }
+  else if(type === 'choice' && q.options.length > 6) { q.options=q.options.slice(0,6); }
+  save();
+  renderSurveyList();
+  setTimeout(()=>{ document.getElementById('sqitem-'+id).classList.add('expanded'); },10);
+}
+
+function removeSurveyQuestion(id) {
+  state.questions.survey = state.questions.survey.filter(q=>q.id!==id);
+  save();
+  renderSurveyList();
+  toast('🗑 Umfrage-Frage gelöscht.');
+}
+
+// ── Survey Control List ──
+function renderSurveyControlList() {
+  const container = document.getElementById('surveyControlList');
+  const qs = state.questions.survey;
+  if(!qs||qs.length===0) {
+    container.innerHTML='<p style="color:var(--grey);font-size:14px;padding:16px 0;">Keine Umfrage-Fragen vorhanden. Erst im Fragen-Builder erstellen.</p>';
+    return;
+  }
+  const typeLabels = {stars:'⭐ Sterne 1-5', choice:'☑ Multiple Choice', yesno:'✓✗ Ja / Nein'};
+  container.innerHTML = qs.map((q,i) => {
+    const ctrl = state.surveyControl?.[q.id] || {active:false, revealed:false};
+    return `
+    <div class="ctrl-row">
+      <div class="ctrl-qnum" style="background:rgba(61,223,160,0.1);border-color:rgba(61,223,160,0.3);color:#3ddfa0;">${i+1}</div>
+      <div class="ctrl-text">
+        <div class="ctrl-qtitle">${esc(q.text.slice(0,70))}${q.text.length>70?'…':''}</div>
+        <div class="ctrl-qmeta">${typeLabels[q.answerType]||''} · ${q.votes.reduce((a,b)=>a+b,0)} Antworten</div>
+      </div>
+      <div class="ctrl-btns">
+        <button class="btn-activate ${ctrl.active?'active':''}" id="sbtnAct-${q.id}"
+          onclick="toggleSurveyActivate('${q.id}')"
+          style="${ctrl.active?'':'color:#3ddfa0;border-color:rgba(61,223,160,0.4);'}">
+          ${ctrl.active?'Aktiv':'Aktivieren'}
+        </button>
+        <button class="btn-reveal ${ctrl.revealed?'revealed':''}" id="sbtnRev-${q.id}"
+          onclick="toggleSurveyReveal('${q.id}')"
+          ${!ctrl.active?'disabled':''}>
+          ${ctrl.revealed?'Aufgedeckt ✓':'Aufdecken'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSurveyActivate(id) {
+  if(!state.surveyControl) state.surveyControl = {};
+  if(!state.surveyControl[id]) state.surveyControl[id] = {active:false,revealed:false};
+  state.surveyControl[id].active = !state.surveyControl[id].active;
+  if(state.surveyControl[id].active) state.surveyControl[id].revealed = false;
+  save();
+  renderSurveyControlList();
+  // Firebase sync
+  if(state.event && window._fbSet && window._fbRef && window._fbDb) {
+    const q = state.questions.survey.find(q=>q.id===id);
+    if(q) {
+      window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/active'), state.surveyControl[id].active);
+      window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/revealed'), false);
+      if(state.surveyControl[id].active) {
+        window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/text'), q.text);
+        window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/answerType'), q.answerType);
+        window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/options'), q.options);
+        window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/source'), q.source||'');
+      }
+    }
+  }
+  toast(state.surveyControl[id].active ? '▶ Umfrage-Frage aktiviert!' : '⏸ Deaktiviert.');
+}
+
+function toggleSurveyReveal(id) {
+  if(!state.surveyControl) state.surveyControl = {};
+  if(!state.surveyControl[id]) state.surveyControl[id] = {active:true,revealed:false};
+  state.surveyControl[id].revealed = !state.surveyControl[id].revealed;
+  save();
+  renderSurveyControlList();
+  if(state.event && window._fbSet && window._fbRef && window._fbDb) {
+    window._fbSet(window._fbRef(window._fbDb, 'events/' + state.event.id + '/survey/' + id + '/revealed'), state.surveyControl[id].revealed);
+  }
+  toast(state.surveyControl[id].revealed ? '👁 Umfrage-Ergebnis aufgedeckt!' : 'Ausgeblendet.');
+}
+
+// ── Survey QR Code ──
+function generateSurveyQR(ev) {
+  const cleanBase = window.location.origin + window.location.pathname.replace('admin.html','');
+  const version = Date.now();
+  const surveyUrlVal = `${cleanBase}survey.html?event=${ev.id}&v=${version}`;
+  document.getElementById('surveyUrl').textContent = surveyUrlVal;
+  document.getElementById('surveyQrcode').innerHTML = '';
+  new QRCode(document.getElementById('surveyQrcode'), {
+    text: surveyUrlVal,
+    width: 140, height: 140,
+    colorDark: '#02477B',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+function downloadSurveyQR() {
+  const canvas = document.querySelector('#surveyQrcode canvas');
+  if(!canvas) { toast('⚠ Erst Event speichern.'); return; }
+  const a = document.createElement('a');
+  a.download = (state.event?.id || 'survey-qrcode') + '-survey.png';
+  a.href = canvas.toDataURL();
+  a.click();
+  toast('✓ Umfrage QR-Code gespeichert.');
+}
+
+function copySurveyURL() {
+  const url = document.getElementById('surveyUrl').textContent;
+  navigator.clipboard.writeText(url).then(()=>toast('✓ Umfrage-Link kopiert!'));
 }
 
 // ══════════════════════════════════════════════
