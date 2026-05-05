@@ -99,7 +99,7 @@ const db = getDatabase(app);
 
 const LETTERS = ['A','B','C','D','E','F'];
 const eventId = new URLSearchParams(window.location.search).get('event') || 'default';
-const participantURL = window.location.href.replace('display.html','participant.html') + '?event=' + eventId;
+const participantURL = window.location.href.replace('display.html','quiz.html') + '?event=' + eventId;
 
 // Generate QR code
 new QRCode(document.getElementById('qrDisplay'), {
